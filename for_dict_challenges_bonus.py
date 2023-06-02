@@ -67,7 +67,7 @@ def generate_chat_history() -> list:
 
 
 def content_maker(messages: list[dict]) -> str:
-    writer: list = [messages[i]['sent_by'] for i in range(len(messages))]
+    writer = [message['sent_by'] for message in messages if message['sent_by']]
     max_writer: int = max(writer, key=writer.count)
     ids_max_writers: set = set([i for i in writer if writer.count(i) == writer.count(max_writer)])
     res: str = ', '.join(map(str, (set(ids_max_writers))))
@@ -75,19 +75,21 @@ def content_maker(messages: list[dict]) -> str:
 
 
 def reply_maker(messages: list[dict]) -> str:
-    reply_ids: list = [messages[i]['reply_for'] for i in range(len(messages)) if messages[i]['reply_for']]
-    ids_replied: list = [messages[i]['sent_by'] for i in range(len(reply_ids)) if messages[i]['sent_by']]
-    try:
-        max_replied: int = max(ids_replied, key=ids_replied.count)
-    except ValueError as ve:
-        max_replied: None = None
-    return f'User ID, на сообщения которого больше всего отвечали - {max_replied}.'
+    reply_ids: list = [message['sent_by'] for message in messages if message['reply_for']]
+    max_replied: int = max(reply_ids, key=reply_ids.count)
+    count_max_replied: int = reply_ids.count(max_replied)
+    res: list = [i for i in reply_ids if reply_ids.count(i) == count_max_replied]
+    replied: str = ', '.join(map(str, (set(res))))
+    return f'User ID, на сообщения которого больше всего отвечали - {replied}.'
+
 
 
 def influencer(messages: list[dict]) -> str:
-    users_seen_max: list = max([len(messages[i]['seen_by']) for i in range(len(messages)) if messages[i]['seen_by']])
-    res: list= [messages[i]['sent_by'] for i in range(len(messages)) if len(messages[i]['seen_by']) == users_seen_max]
-    ids_seen_max: set = ', '.join(map(str, (set(res))))
+    users_seen: list = [message['sent_by'] for message in messages if message['seen_by']]
+    max_seen: int = max(users_seen, key=users_seen.count)
+    count_max_seen: int = users_seen.count(max_seen)
+    res: list = [i for i in users_seen if users_seen.count(i) == count_max_seen]
+    ids_seen_max: str = ', '.join(map(str, (set(res))))
     return f'User ID, сообщения которых видело больше всего уникальных пользователей - {ids_seen_max}.'
 
 
@@ -97,21 +99,17 @@ def when_they_chat(messages: list[dict]) -> str:
         'днем': 0,
         'вечером': 0,
         }
-    for i in range(len(messages)):
-        if messages[i]['sent_at'].hour in range(12):
+    for message in messages:
+        if 0 <= message['sent_at'].hour < 12:
             msg_count['утром'] += 1
-        elif messages[i]['sent_at'].hour in range(12, 18):
+        elif 12 <= message['sent_at'].hour < 18:
             msg_count['днем'] += 1
-        else:
+        elif 18 <= message['sent_at'].hour < 24:
             msg_count['вечером'] += 1
-
     max_msg_by_hour: str = ', '.join([k for k, v in msg_count.items() if v == max(msg_count.values())])
     return f'В чате больше всего сообщений: {max_msg_by_hour}.'
 
 
-def threads(messages: list[dict]) -> str:
-    for i in range(len(messages)):
-        print(messages[i]['reply_for'])
 
 
 if __name__ == "__main__":
