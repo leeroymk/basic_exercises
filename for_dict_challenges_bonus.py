@@ -83,7 +83,6 @@ def reply_maker(messages: list[dict]) -> str:
     return f'User ID, на сообщения которого больше всего отвечали - {replied}.'
 
 
-
 def influencer(messages: list[dict]) -> str:
     users_seen: list = [message['sent_by'] for message in messages if message['seen_by']]
     max_seen: int = max(users_seen, key=users_seen.count)
@@ -110,11 +109,30 @@ def when_they_chat(messages: list[dict]) -> str:
     return f'В чате больше всего сообщений: {max_msg_by_hour}.'
 
 
+def longest_thread(messages: list[dict]) -> str:
+    start_thread_list: list = [msg for msg in messages if not msg['reply_for']]
+    etc_thread_list: list = [msg for msg in messages if msg['reply_for']]
+    max_thread: list = []
+    threads: dict = {}
+    for start_msg in start_thread_list:
+        max_thread.append(start_msg['id'])
+        start_id: uuid = start_msg['id']
+        temp: uuid = start_msg['id']
+        for reply_msg in etc_thread_list:
+            if reply_msg['reply_for'] == temp:
+                max_thread.append(reply_msg['id'])
+                temp = reply_msg['id']
+        threads[start_id] = len(max_thread)
+        max_thread = []
+    longest_thread_value: int = max(threads.values())
+    longest_thread_id: str = ', '.join([str(k) for k, v in threads.items() if v == longest_thread_value])
+    return f'ID сообщений, начавших самые длинные треды: {longest_thread_id}. Длина треда: {longest_thread_value}'
 
 
 if __name__ == "__main__":
-    print(generate_chat_history())
+    generate_chat_history()
     print(content_maker(messages=generate_chat_history()))
     print(reply_maker(messages=generate_chat_history()))
     print(influencer(messages=generate_chat_history()))
     print(when_they_chat(messages=generate_chat_history()))
+    print(longest_thread(messages=generate_chat_history()))
